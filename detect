@@ -1,0 +1,14 @@
+
+#!/usr/bin/env bash
+# bin/detect <build-dir>
+set -e
+
+build=$(cd "$1/" && pwd)
+echo $build
+
+if test -d "${build}/terraform" # terraform folder
+then
+  echo Infra
+else
+  exit 1
+fi
