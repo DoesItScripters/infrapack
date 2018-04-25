@@ -2,12 +2,16 @@
 #VERSION=0.0.1
 #SEMVER=$(VERSION)-$(COMMIT)
 
-all: test
+all: test up
 
-test:
+create:
 	mkdir out && cd out && cp -r ../terraform terraform && \
-	draft create -p infra && \
-	draft up
+	draft create
+up:
+	cd out && draft up
 
 clean:
 	rm -rf out
+
+purge:
+	helm delete out --purge

@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: terraformplan-{{ .Release.Name }}{{ .Release.Revision }}
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: copycodetoconfigmap
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        workingDir: /terraform
+        command: ["sh",  "-c", 'cp * /code/' ]
+        volumeMounts:
+          - name: code
+            mountPath: /code
+      containers:
+      - name: terraformplan
+        image: hashicorp/terraform:light
+        workingDir: /code
+        command: [ 'sh', '-c', 'terraform init && terraform plan' ]
+        #command: ["tail",  "-f", "/dev/null"]
+        volumeMounts:
+          - name: code
+            mountPath: /code
+      volumes:
+        - name: code
+          emptyDir: {}
+      restartPolicy: Never
+  backoffLimit: 4

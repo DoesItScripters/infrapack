@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: Secret
-metadata:
-  name: stub
-type: Opaque
-data:
-  username: stub
-  password: stub
