@@ -2,7 +2,7 @@
 #VERSION=0.0.1
 #SEMVER=$(VERSION)-$(COMMIT)
 
-all: test up
+all: clean create up
 
 create:
 	mkdir out && cd out && cp -r ../terraform terraform && \
