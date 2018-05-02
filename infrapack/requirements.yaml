@@ -1,0 +1,5 @@
+dependencies:
+- name: vault
+  version: 0.5.0
+  repository: https://storage.googleapis.com/kubernetes-charts-incubator
+  condition: vault.enabled
