@@ -9,13 +9,14 @@ spec:
       containers:
       - name: vaultconfig
         image: "{{ .Values.vault.image.repository }}:{{ .Values.vault.image.tag }}"
-        workingDir: /code
-        command: ["tail",  "-f", "/dev/null"]
+        workingDir: /config
+        command: ["sh", "./config.sh"]
         volumeMounts:
-          - name: code
-            mountPath: /code
+          - name: config
+            mountPath: /config
       volumes:
-        - name: code
-          emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ template "vault.fullname" . }}
       restartPolicy: Never
   backoffLimit: 4
