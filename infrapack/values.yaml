@@ -1,2 +1,6 @@
 vault:
   enabled: true
+  replicaCount: 1
+  image:
+    repository: vault
+    tag: 0.9.0

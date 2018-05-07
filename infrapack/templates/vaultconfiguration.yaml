@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "vault.fullname" . }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ template "vault.fullname" . }}
+      containers:
+      - name: vaultconfig
+        image: "{{ .Values.vault.image.repository }}:{{ .Values.vault.image.tag }}"
+        workingDir: /code
+        command: ["tail",  "-f", "/dev/null"]
+        volumeMounts:
+          - name: code
+            mountPath: /code
+      volumes:
+        - name: code
+          emptyDir: {}
+      restartPolicy: Never
+  backoffLimit: 4
