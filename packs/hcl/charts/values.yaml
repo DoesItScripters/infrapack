@@ -1,1 +1,2 @@
-
+vault:
+  url: http://infrapack-vault:8200

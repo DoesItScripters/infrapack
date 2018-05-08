@@ -13,17 +13,30 @@ spec:
         volumeMounts:
           - name: code
             mountPath: /code
+      - name: rendertemplates
+        image: "hashicorp/consul-template:0.19.4-alpine"
+        workingDir: /code
+        command: ["sh", "/config/consul-template.sh"]
+        volumeMounts:
+          - name: code
+            mountPath: /code
+          - name: consul-template-config
+            mountPath: /config
       containers:
       - name: terraformplan
         image: hashicorp/terraform:light
         workingDir: /code
-        command: [ 'sh', '-c', 'terraform init && terraform plan' ]
-        #command: ["tail",  "-f", "/dev/null"]
+        #command: [ 'sh', '-c', 'terraform init && terraform plan' ]
+        command: ["tail",  "-f", "/dev/null"]
         volumeMounts:
           - name: code
             mountPath: /code
       volumes:
+        - name: consul-template-config
+          configMap:
+            name: terraformplan-{{ .Release.Name }}{{ .Release.Revision }}
         - name: code
-          emptyDir: {}
+          emptyDir: 
+            medium: Memory
       restartPolicy: Never
   backoffLimit: 4
