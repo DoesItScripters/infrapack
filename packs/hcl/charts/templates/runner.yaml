@@ -9,7 +9,7 @@ spec:
       - name: copycodetoconfigmap
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         workingDir: /terraform
-        command: ["sh",  "-c", 'cp * /code/' ]
+        command: ["sh",  "-c", 'cp -rf * /code/' ]
         volumeMounts:
           - name: code
             mountPath: /code
@@ -26,8 +26,8 @@ spec:
       - name: terraformplan
         image: hashicorp/terraform:light
         workingDir: /code
-        #command: [ 'sh', '-c', 'terraform init && terraform plan' ]
-        command: ["tail",  "-f", "/dev/null"]
+        command: [ 'sh', '-c', '[ -f ./init.sh ] && source ./init.sh ; terraform init && terraform plan' ]
+        #command: ["tail",  "-f", "/dev/null"]
         volumeMounts:
           - name: code
             mountPath: /code

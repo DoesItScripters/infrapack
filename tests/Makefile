@@ -13,4 +13,5 @@ clean:
 	rm -rf out
 
 purge:
-	helm delete infrapack --purge || helm delete out --purge ; exit 0
+	helm delete infrapack --purge ; \
+	helm delete out --purge ; exit 0
