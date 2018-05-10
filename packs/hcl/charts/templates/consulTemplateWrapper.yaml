@@ -18,9 +18,7 @@ data:
 
     echo $VAULT_TOKEN
 
-    consul-template \
-        --vault-token=$VAULT_TOKEN \
-        --vault-addr=$VAULT_ADDR \
-        --vault-renew-token=false \
-        -template "credentials.ctmpl:credentials.tf" \
-        -once
+    for i in *.ctmpl
+    do echo $i
+     consul-template --vault-token=$VAULT_TOKEN --vault-addr=$VAULT_ADDR --vault-renew-token=false -template "$i:$( echo $i| rev | cut -d '.' -f2- |rev )" -once
+    done

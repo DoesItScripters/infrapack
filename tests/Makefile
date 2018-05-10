@@ -1,8 +1,7 @@
-#COMMIT=$(shell git log --pretty=format:"%H" -n 1)
-#VERSION=0.0.1
-#SEMVER=$(VERSION)-$(COMMIT)
+all: clean purge install_infrapack create
 
-all: clean create up
+install_infrapack:
+	cd ../infrapack && helm install -n infrapack .
 
 create:
 	mkdir out && cd out && cp -r ../terraform terraform && \
@@ -14,4 +13,4 @@ clean:
 	rm -rf out
 
 purge:
-	helm delete out --purge
+	helm delete infrapack --purge || helm delete out --purge ; exit 0
