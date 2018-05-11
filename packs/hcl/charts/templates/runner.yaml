@@ -9,10 +9,12 @@ spec:
       - name: copycodetoconfigmap
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         workingDir: /terraform
-        command: ["sh",  "-c", 'cp -rf * /code/' ]
+        command: ["sh",  "-c", "cp -rf * /code/ && [ -f /state/terraform.tfstate ] && cp /state/terraform.tfstate /code/ "]
         volumeMounts:
           - name: code
             mountPath: /code
+          - name: state
+            mountPath: /state
       - name: rendertemplates
         image: "hashicorp/consul-template:0.19.4-alpine"
         workingDir: /code
@@ -22,12 +24,25 @@ spec:
             mountPath: /code
           - name: consul-template-config
             mountPath: /config
-      containers:
-      - name: terraformplan
+      - name: terraformapply
         image: hashicorp/terraform:light
         workingDir: /code
-        command: [ 'sh', '-c', '[ -f ./init.sh ] && source ./init.sh ; terraform init && terraform plan' ]
-        #command: ["tail",  "-f", "/dev/null"]
+        command: [ 'sh', '-c', '[ -f ./init.sh ] && source ./init.sh ; terraform init && terraform apply' ]
+        volumeMounts:
+          - name: code
+            mountPath: /code
+      - name: savestate
+        image: lachlanevenson/k8s-kubectl:v1.10.2
+        workingDir: /code
+        command: [ 'sh', '-c', 'kubectl delete secret state-{{ .Release.Name }}{{ .Release.Revision }} && kubectl create secret generic state-{{ .Release.Name }}{{ .Release.Revision }} --from-file=./terraform.tfstate' ]
+        volumeMounts:
+          - name: code
+            mountPath: /code
+      containers:
+      - name: debug
+        image: lachlanevenson/k8s-kubectl:v1.10.2
+        workingDir: /code
+        command: ["tail",  "-f", "/dev/null"]
         volumeMounts:
           - name: code
             mountPath: /code
@@ -35,6 +50,9 @@ spec:
         - name: consul-template-config
           configMap:
             name: terraformplan-{{ .Release.Name }}{{ .Release.Revision }}
+        - name: state
+          secret:
+            secretName: state-{{ .Release.Name }}{{ .Release.Revision }}
         - name: code
           emptyDir: 
             medium: Memory
