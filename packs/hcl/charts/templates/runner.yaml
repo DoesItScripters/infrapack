@@ -24,8 +24,15 @@ spec:
             mountPath: /code
           - name: consul-template-config
             mountPath: /config
+      - name: packerbuild
+        image: hashicorp/packer:1.2.3
+        workingDir: /code
+        command: ["sh",  "-c", "for i in ./image*;do packer build -var-file=$i/vars.json $i/manifest.json | tee $i.log;done"]
+        volumeMounts:
+          - name: code
+            mountPath: /code
       - name: terraformapply
-        image: hashicorp/terraform:light
+        image: hashicorp/terraform:0.11.7
         workingDir: /code
         command: [ 'sh', '-c', '[ -f ./init.sh ] && source ./init.sh ; terraform init && terraform apply' ]
         volumeMounts:
