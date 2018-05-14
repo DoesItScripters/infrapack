@@ -1,2 +1,2 @@
 vault:
-  url: http://infrapack-vault:8200
+  url: http://vault-vault.vault.svc:8200

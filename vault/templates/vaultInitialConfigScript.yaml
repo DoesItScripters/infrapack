@@ -9,6 +9,7 @@ data:
     }
   config.sh: |-
     #!/bin/sh
+    #Vault kubernetes auth backend autoconfiguration script, should be used for DEV purposes since auto injects vault token
     export TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
     apk add --no-cache curl jq
 
@@ -22,5 +23,7 @@ data:
     vault auth-enable kubernetes && \
     vault write auth/kubernetes/config kubernetes_host=https://kubernetes.default.svc kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt token_reviewer_jwt=$TOKEN && \
     vault write sys/policy/vault policy=@policy.hcl && \
-    vault write auth/kubernetes/role/vault bound_service_account_names=default bound_service_account_namespaces=default policies=default,vault ttl=1h && \
+    vault write auth/kubernetes/role/vault bound_service_account_names={{ .Values.bound_service_account_names }} bound_service_account_namespaces={{ .Values.bound_service_account_namespaces }} policies=default,vault ttl=1h && \
+    
+    #Creating test secret which can be obtained by any pod in allowed namespace with service account credentials
     vault write secret/vault/test ping=pong

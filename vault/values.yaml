@@ -4,3 +4,5 @@ vault:
   image:
     repository: vault
     tag: 0.9.0
+bound_service_account_names: default
+bound_service_account_namespaces: default
