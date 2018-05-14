@@ -1,10 +1,10 @@
-all: clean purge install_infrapack create
+all: clean purge install_vault create
 
-install_infrapack:
-	cd ../infrapack && helm install -n infrapack .
+install_vault:
+	cd ../vault && helm install -n vault --namespace vault .
 
 create:
-	mkdir out && cd out && cp -r ../terraform terraform && \
+	mkdir -p out/infrapack && cd out && cp -r ../testdata/* infrapack/ && \
 	draft create
 up:
 	cd out && draft up
@@ -13,5 +13,4 @@ clean:
 	rm -rf out
 
 purge:
-	helm delete infrapack --purge ; \
 	helm delete out --purge ; exit 0

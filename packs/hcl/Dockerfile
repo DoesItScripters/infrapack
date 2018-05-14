@@ -1,3 +1,3 @@
 FROM alpine
 
-ADD terraform/* terraform/
+ADD infrapack/ infrapack/

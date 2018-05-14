@@ -8,8 +8,8 @@ spec:
       initContainers:
       - name: copycodetoconfigmap
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        workingDir: /terraform
-        command: ["sh",  "-c", "cp -rf * /code/ && [ -f /state/terraform.tfstate ] && cp /state/terraform.tfstate /code/ "]
+        workingDir: /infrapack
+        command: ["sh",  "-c", "cp -rf . /code/ && [ -f /state/terraform.tfstate ] && cp /state/terraform.tfstate /code/terraform/ "]
         volumeMounts:
           - name: code
             mountPath: /code
@@ -27,21 +27,21 @@ spec:
       - name: packerbuild
         image: hashicorp/packer:1.2.3
         workingDir: /code
-        command: ["sh",  "-c", "for i in ./image*;do packer build -var-file=$i/vars.json $i/manifest.json | tee $i.log;done"]
+        command: ["sh",  "-c", "[ -d ./packer ] && cd ./packer && [ -f ./init.sh ] && source ./init.sh ; for i in ./image* ;do packer build -var-file=$i/vars.json $i/manifest.json | tee $i.log;done"]
         volumeMounts:
           - name: code
             mountPath: /code
       - name: terraformapply
         image: hashicorp/terraform:0.11.7
         workingDir: /code
-        command: [ 'sh', '-c', '[ -f ./init.sh ] && source ./init.sh ; terraform init && terraform apply' ]
+        command: [ 'sh', '-c', 'cd ./terraform && [ -f ./init.sh ] && source ./init.sh ; terraform init && terraform apply' ]
         volumeMounts:
           - name: code
             mountPath: /code
       - name: savestate
         image: lachlanevenson/k8s-kubectl:v1.10.2
         workingDir: /code
-        command: [ 'sh', '-c', 'kubectl delete secret state-{{ .Release.Name }}{{ .Release.Revision }} && kubectl create secret generic state-{{ .Release.Name }}{{ .Release.Revision }} --from-file=./terraform.tfstate' ]
+        command: [ 'sh', '-c', 'kubectl delete secret state-{{ .Release.Name }}{{ .Release.Revision }} && kubectl create secret generic state-{{ .Release.Name }}{{ .Release.Revision }} --from-file=./terraform/terraform.tfstate' ]
         volumeMounts:
           - name: code
             mountPath: /code

@@ -13,10 +13,10 @@ data:
 
     VAULT_TOKEN=$(curl -sb \
         --request POST \
-        --data "{\"role\": \"infrapack\", \"jwt\": \"${SERVICE_ACCOUNT_TOKEN}\"}" \
+        --data "{\"role\": \"vault\", \"jwt\": \"${SERVICE_ACCOUNT_TOKEN}\"}" \
         "${VAULT_ADDR}/v1/auth/kubernetes/login" | jq -r '.auth .client_token')
 
-    echo $VAULT_TOKEN
+    #echo $VAULT_TOKEN
 
     for i in *.ctmpl
     do echo $i
