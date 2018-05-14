@@ -4,7 +4,7 @@ metadata:
   name: {{ template "vault.fullname" . }}
 data:
   policy.hcl: |-
-    path "secret/infrapack/*" {
+    path "secret/vault/*" {
     capabilities = ["read"]
     }
   config.sh: |-
@@ -16,11 +16,11 @@ data:
     export VAULT_SKIP_VERIFY="true"
     export VAULT_TOKEN=$(curl -k --header "Authorization: Bearer $TOKEN" https://kubernetes.default.svc/api/v1/namespaces/{{ .Release.Namespace }}/pods/ -s|jq -r '.items[]|.metadata.name'|xargs -I % curl -s -k --header "Authorization: Bearer $TOKEN" https://kubernetes.default.svc/api/v1/namespaces/{{ .Release.Namespace }}/pods/%/log|grep "Root Token"|awk '{print $3}')
     
-    echo "TOKEN: $TOKEN" 
-    echo "VAULT_TOKEN: $VAULT_TOKEN"
+    #echo "TOKEN: $TOKEN" 
+    #echo "VAULT_TOKEN: $VAULT_TOKEN"
 
     vault auth-enable kubernetes && \
     vault write auth/kubernetes/config kubernetes_host=https://kubernetes.default.svc kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt token_reviewer_jwt=$TOKEN && \
-    vault write sys/policy/infrapack policy=@policy.hcl && \
-    vault write auth/kubernetes/role/infrapack bound_service_account_names=default bound_service_account_namespaces=default policies=default,infrapack ttl=1h && \
-    vault write secret/infrapack/test ping=pong
+    vault write sys/policy/vault policy=@policy.hcl && \
+    vault write auth/kubernetes/role/vault bound_service_account_names=default bound_service_account_namespaces=default policies=default,vault ttl=1h && \
+    vault write secret/vault/test ping=pong
