@@ -7,7 +7,7 @@ spec:
     spec:
       initContainers:
       - name: copycodetoconfigmap
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: {{ .Values.image }}
         workingDir: /infrapack
         command: ["sh",  "-c", "cp -rf . /code/ && [ -f /state/terraform.tfstate ] && cp /state/terraform.tfstate /code/terraform/ "]
         volumeMounts:
