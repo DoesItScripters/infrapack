@@ -27,10 +27,12 @@ spec:
       - name: packerbuild
         image: hashicorp/packer:1.2.3
         workingDir: /code
-        command: ["sh",  "-c", "[ -d ./packer ] && cd ./packer && [ -f ./init.sh ] && source ./init.sh ; packer build -machine-readable -var-file=vars.json input.json | tee output.log"]
+        command: ["sh",  "-c", "[ -d ./packer ] && cd ./packer && [ -f ./init.sh ] && source ./init.sh ; if sha1sum -c /state/input.sha1; then echo NOT BUILDING SINCE NO CHANGE; else packer build -machine-readable -var-file=vars.json input.json | tee output.log && sha1sum input.json > input.sha1 ; fi"]
         volumeMounts:
           - name: code
             mountPath: /code
+          - name: state
+            mountPath: /state
       - name: terraformapply
         image: hashicorp/terraform:0.11.7
         workingDir: /code
@@ -41,7 +43,7 @@ spec:
       - name: savestate
         image: lachlanevenson/k8s-kubectl:v1.10.2
         workingDir: /code
-        command: [ 'sh', '-c', 'kubectl delete secret state-{{ .Release.Name }}{{ .Release.Revision }} && kubectl create secret generic state-{{ .Release.Name }}{{ .Release.Revision }} --from-file=./terraform/terraform.tfstate' ]
+        command: [ 'sh', '-c', 'kubectl delete secret state-{{ .Release.Name }} && kubectl create secret generic state-{{ .Release.Name }} --from-file=./terraform/terraform.tfstate --from-file=./packer/input.sha1' ]
         volumeMounts:
           - name: code
             mountPath: /code
@@ -53,13 +55,15 @@ spec:
         volumeMounts:
           - name: code
             mountPath: /code
+          - name: state
+            mountPath: /state
       volumes:
         - name: consul-template-config
           configMap:
             name: terraformplan-{{ .Release.Name }}{{ .Release.Revision }}
         - name: state
           secret:
-            secretName: state-{{ .Release.Name }}{{ .Release.Revision }}
+            secretName: state-{{ .Release.Name }}
         - name: code
           emptyDir: 
             medium: Memory
