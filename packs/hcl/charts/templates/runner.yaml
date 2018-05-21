@@ -27,7 +27,7 @@ spec:
       - name: packerbuild
         image: hashicorp/packer:1.2.3
         workingDir: /code
-        command: ["sh",  "-c", "[ -d ./packer ] && cd ./packer && [ -f ./init.sh ] && source ./init.sh ; for i in ./image* ;do cd $i && packer build -machine-readable -var-file=vars.json input.json | tee $i.log;done"]
+        command: ["sh",  "-c", "[ -d ./packer ] && cd ./packer && [ -f ./init.sh ] && source ./init.sh ; packer build -machine-readable -var-file=vars.json input.json | tee output.log"]
         volumeMounts:
           - name: code
             mountPath: /code
