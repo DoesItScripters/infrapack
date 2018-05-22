@@ -43,10 +43,12 @@ spec:
       - name: savestate
         image: lachlanevenson/k8s-kubectl:v1.10.2
         workingDir: /code
-        command: [ 'sh', '-c', 'kubectl delete secret state-{{ .Release.Name }} && kubectl create secret generic state-{{ .Release.Name }} --from-file=./terraform/terraform.tfstate --from-file=./packer/input.sha1' ]
+        command: [ 'sh', '/savestate/savestate.sh' ]
         volumeMounts:
           - name: code
             mountPath: /code
+          - name: savestate
+            mountPath: /savestate
       containers:
       - name: debug
         image: lachlanevenson/k8s-kubectl:v1.10.2
@@ -61,6 +63,9 @@ spec:
         - name: consul-template-config
           configMap:
             name: terraformplan-{{ .Release.Name }}{{ .Release.Revision }}
+        - name: savestate
+          configMap:
+            name: savestate-{{ .Release.Name }}
         - name: state
           secret:
             secretName: state-{{ .Release.Name }}
