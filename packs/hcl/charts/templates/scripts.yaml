@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-{{ .Release.Name }}{{ .Release.Revision }}
+data:
+  packerbuild.sh: |-
+    #!/bin/sh
+    if [ -d ./packer ] 
+    then 
+     cd ./packer
+     [ -f ./init.sh ] && source ./init.sh
+
+     if [ -f /state/input.sha1 ] && sha1sum -c /state/input.sha1
+      then echo NOT BUILDING SINCE NO CHANGE
+     else 
+      packer build -machine-readable -var-file=vars.json input.json | tee output.log
+      sha1sum input.json > input.sha1
+     fi
+    fi
+  savestate.sh: |-
+    #!/bin/sh
+
+    TFSTATE_PATH="terraform/terraform.tfstate"
+    PACKERSHA="packer/input.sha1"
+
+    if [ -f $TFSTATE_PATH ]
+    then
+    TFSTATE="$(base64 < $TFSTATE_PATH)"
+    CHOMP=$(echo $TFSTATE|tr -d ' ')
+    TFPATCH="$(echo "{\"data\":{\"terraform.tfstate\": \"$CHOMP\"}}")"
+    echo "Patching tfstate"
+    kubectl patch secret state-infrapack -p="$TFPATCH"
+    else
+    echo "Not patching tfstate"
+    fi
+
+    if [ -f $PACKERSHA ]
+    then
+    PSTATE="$(base64 < $PACKERSHA)"
+    PCHOMP=$(echo $PSTATE|tr -d ' ')
+    PPATCH="$(echo "{\"data\":{\"input.sha1\": \"$PCHOMP\"}}")"
+    echo "Patching packer checksum"
+    kubectl patch secret state-infrapack -p="$PPATCH"
+    else
+    echo "Not patching packer checksum"
+    fi
+  consul-template.sh: |-
+    #!/bin/sh
+    {{ if .Values.vault.enabled }}
+    apk add --no-cache jq
+
+    SERVICE_ACCOUNT_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+    export VAULT_ADDR={{ .Values.vault.url }}
+
+    VAULT_TOKEN=$(curl -sb \
+        --request POST \
+        --data "{\"role\": \"vault\", \"jwt\": \"${SERVICE_ACCOUNT_TOKEN}\"}" \
+        "${VAULT_ADDR}/v1/auth/kubernetes/login" | jq -r '.auth .client_token')
+
+    #echo $VAULT_TOKEN
+
+    for i in *.ctmpl
+    do echo $i
+     consul-template --vault-token=$VAULT_TOKEN --vault-addr=$VAULT_ADDR --vault-renew-token=false -template "$i:$( echo $i| rev | cut -d '.' -f2- |rev )" -once
+    done
+    {{ end }}

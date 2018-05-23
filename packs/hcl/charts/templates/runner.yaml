@@ -1,12 +1,12 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: terraformplan-{{ .Release.Name }}{{ .Release.Revision }}
+  name: infrapack-{{ .Release.Name }}{{ .Release.Revision }}
 spec:
   template:
     spec:
       initContainers:
-      - name: copycodetoconfigmap
+      - name: copytoworkdir
         image: {{ .Values.image }}
         workingDir: /infrapack
         command: ["sh",  "-c", "cp -rf . /code/ && [ -f /state/terraform.tfstate ] && cp /state/terraform.tfstate /code/terraform/ "]
@@ -18,21 +18,23 @@ spec:
       - name: rendertemplates
         image: "hashicorp/consul-template:0.19.4-alpine"
         workingDir: /code
-        command: ["sh", "/config/consul-template.sh"]
+        command: ["sh", "/scripts/consul-template.sh"]
         volumeMounts:
           - name: code
             mountPath: /code
-          - name: consul-template-config
-            mountPath: /config
+          - name: scripts
+            mountPath: /scripts
       - name: packerbuild
         image: hashicorp/packer:1.2.3
         workingDir: /code
-        command: ["sh",  "-c", "[ -d ./packer ] && cd ./packer && [ -f ./init.sh ] && source ./init.sh ; if sha1sum -c /state/input.sha1; then echo NOT BUILDING SINCE NO CHANGE; else packer build -machine-readable -var-file=vars.json input.json | tee output.log && sha1sum input.json > input.sha1 ; fi"]
+        command: ["sh", "/scripts/packerbuild.sh"]
         volumeMounts:
           - name: code
             mountPath: /code
           - name: state
             mountPath: /state
+          - name: scripts
+            mountPath: /scripts
       - name: terraformapply
         image: hashicorp/terraform:0.11.7
         workingDir: /code
@@ -43,12 +45,12 @@ spec:
       - name: savestate
         image: lachlanevenson/k8s-kubectl:v1.10.2
         workingDir: /code
-        command: [ 'sh', '/savestate/savestate.sh' ]
+        command: [ 'sh', '/scripts/savestate.sh' ]
         volumeMounts:
           - name: code
             mountPath: /code
-          - name: savestate
-            mountPath: /savestate
+          - name: scripts
+            mountPath: /scripts
       containers:
       - name: debug
         image: lachlanevenson/k8s-kubectl:v1.10.2
@@ -60,12 +62,9 @@ spec:
           - name: state
             mountPath: /state
       volumes:
-        - name: consul-template-config
+        - name: scripts
           configMap:
-            name: terraformplan-{{ .Release.Name }}{{ .Release.Revision }}
-        - name: savestate
-          configMap:
-            name: savestate-{{ .Release.Name }}{{ .Release.Revision }}
+            name: scripts-{{ .Release.Name }}{{ .Release.Revision }}
         - name: state
           secret:
             secretName: state-{{ .Release.Name }}
