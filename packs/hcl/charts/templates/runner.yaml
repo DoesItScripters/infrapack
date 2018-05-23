@@ -65,7 +65,7 @@ spec:
             name: terraformplan-{{ .Release.Name }}{{ .Release.Revision }}
         - name: savestate
           configMap:
-            name: savestate-{{ .Release.Name }}
+            name: savestate-{{ .Release.Name }}{{ .Release.Revision }}
         - name: state
           secret:
             secretName: state-{{ .Release.Name }}
