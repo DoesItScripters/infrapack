@@ -10,7 +10,7 @@ spec:
       - name: copytoworkdir
         image: {{ .Values.image }}
         workingDir: /infrapack
-        command: ["sh",  "-c", "cp -rf . /code/ && [ -f /state/terraform.tfstate ] && cp /state/terraform.tfstate /code/terraform/ "]
+        command: ["sh",  "-c", "cp -rf . /code/ && [ -f /state/terraform.tfstate ] && cp /state/terraform.tfstate /code/ "]
         volumeMounts:
           - name: code
             mountPath: /code
@@ -39,7 +39,7 @@ spec:
       - name: terraformapply
         image: hashicorp/terraform:0.11.7
         workingDir: /code
-        command: [ 'sh', '-c', 'cd ./terraform && [ -f ./init.sh ] && source ./init.sh ; terraform init && terraform apply' ]
+        command: [ 'sh', '-c', '[ -f ./init.sh ] && source ./init.sh ; terraform init && terraform apply' ]
         volumeMounts:
           - name: code
             mountPath: /code

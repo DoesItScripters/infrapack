@@ -5,23 +5,19 @@ metadata:
 data:
   packerbuild.sh: |-
     #!/bin/sh
-    if [ -d ./packer ] 
-    then 
-     cd ./packer
      [ -f ./init.sh ] && source ./init.sh
 
-     if [ -f /state/input.sha1 ] && sha1sum -c /state/input.sha1
+     if [ -f /state/packer.sha1 ] && sha1sum -c /state/packer.sha1
       then echo NOT BUILDING SINCE NO CHANGE
      else 
-      packer build -machine-readable -var-file=vars.json input.json | tee output.log
-      sha1sum input.json > input.sha1
+      packer build -machine-readable -var-file=packer_vars.json packer.json | tee packer_output.log
+      sha1sum packer.json > packer.sha1
      fi
-    fi
   savestate.sh: |-
     #!/bin/sh
 
-    TFSTATE_PATH="terraform/terraform.tfstate"
-    PACKERSHA="packer/input.sha1"
+    TFSTATE_PATH="terraform.tfstate"
+    PACKERSHA="packer.sha1"
 
     if [ -f $TFSTATE_PATH ]
     then
@@ -29,7 +25,7 @@ data:
     CHOMP=$(echo $TFSTATE|tr -d ' ')
     TFPATCH="$(echo "{\"data\":{\"terraform.tfstate\": \"$CHOMP\"}}")"
     echo "Patching tfstate"
-    kubectl patch secret state-infrapack -p="$TFPATCH"
+    kubectl patch secret state-{{ .Release.Name }} -p="$TFPATCH"
     else
     echo "Not patching tfstate"
     fi
@@ -38,9 +34,9 @@ data:
     then
     PSTATE="$(base64 < $PACKERSHA)"
     PCHOMP=$(echo $PSTATE|tr -d ' ')
-    PPATCH="$(echo "{\"data\":{\"input.sha1\": \"$PCHOMP\"}}")"
+    PPATCH="$(echo "{\"data\":{\"packer.sha1\": \"$PCHOMP\"}}")"
     echo "Patching packer checksum"
-    kubectl patch secret state-infrapack -p="$PPATCH"
+    kubectl patch secret state-{{ .Release.Name }} -p="$PPATCH"
     else
     echo "Not patching packer checksum"
     fi
