@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: infrapack-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 roleRef:
   kind: Role
