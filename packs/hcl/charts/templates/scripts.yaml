@@ -18,28 +18,42 @@ data:
 
     TFSTATE_PATH="terraform.tfstate"
     PACKERSHA="packer.sha1"
+    PACKEROUTPUT="output.json"
 
     if [ -f $TFSTATE_PATH ]
     then
-    TFSTATE="$(base64 < $TFSTATE_PATH)"
-    CHOMP=$(echo $TFSTATE|tr -d ' ')
-    TFPATCH="$(echo "{\"data\":{\"terraform.tfstate\": \"$CHOMP\"}}")"
-    echo "Patching tfstate"
-    kubectl patch secret state-{{ .Release.Name }} -p="$TFPATCH"
+      TFSTATE="$(base64 < $TFSTATE_PATH)"
+      CHOMP=$(echo $TFSTATE|tr -d ' ')
+      TFPATCH="$(echo "{\"data\":{\"terraform.tfstate\": \"$CHOMP\"}}")"
+      echo "Patching tfstate"
+      kubectl patch secret state-{{ .Release.Name }} -p="$TFPATCH"
     else
-    echo "Not patching tfstate"
+      echo "Not patching tfstate"
     fi
 
     if [ -f $PACKERSHA ]
     then
-    PSTATE="$(base64 < $PACKERSHA)"
-    PCHOMP=$(echo $PSTATE|tr -d ' ')
-    PPATCH="$(echo "{\"data\":{\"packer.sha1\": \"$PCHOMP\"}}")"
-    echo "Patching packer checksum"
-    kubectl patch secret state-{{ .Release.Name }} -p="$PPATCH"
+      PSTATE="$(base64 < $PACKERSHA)"
+      PCHOMP=$(echo $PSTATE|tr -d ' ')
+      PPATCH="$(echo "{\"data\":{\"packer.sha1\": \"$PCHOMP\"}}")"
+      echo "Patching $PACKERSHA"
+      kubectl patch secret state-{{ .Release.Name }} -p="$PPATCH"
     else
-    echo "Not patching packer checksum"
+      echo "Not patching $PACKERSHA"
     fi
+  
+    if [ -f $PACKEROUTPUT ]
+    then
+      PSTATE="$(base64 < $PACKEROUTPUT)"
+      PCHOMP=$(echo $PSTATE|tr -d ' ')
+      PPATCH="$(echo "{\"data\":{\"$PACKEROUTPUT\": \"$PCHOMP\"}}")"
+      echo "Patching $PACKEROUTPUT"
+      kubectl patch secret state-{{ .Release.Name }} -p="$PPATCH"
+    else
+      echo "Not patching $PACKEROUTPUT"
+    fi
+
+    exit 0
   consul-template.sh: |-
     #!/bin/sh
     {{ if .Values.vault.enabled }}

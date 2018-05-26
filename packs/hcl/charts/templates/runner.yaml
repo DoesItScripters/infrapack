@@ -10,7 +10,7 @@ spec:
       - name: copytoworkdir
         image: {{ .Values.image }}
         workingDir: /infrapack
-        command: ["sh",  "-c", "cp -rf . /code/ && [ -f /state/terraform.tfstate ] && cp /state/terraform.tfstate /code/ "]
+        command: ["sh",  "-c", "cp -rf . /code/ && cp -f /state/* /code/ "]
         volumeMounts:
           - name: code
             mountPath: /code
